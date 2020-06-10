@@ -165,16 +165,27 @@ public:
         cloudHeader = laserCloudMsg->header;
         // cloudHeader.stamp = ros::Time::now(); // Ouster lidar users may need to uncomment this line
         pcl::fromROSMsg(*laserCloudMsg, *laserCloudIn);
+
         // Remove Nan points
         std::vector<int> indices;
+        laserCloudIn->is_dense = false;
         pcl::removeNaNFromPointCloud(*laserCloudIn, *laserCloudIn, indices);
+
         // have "ring" channel in the cloud
         if (useCloudRing == true){
-            pcl::fromROSMsg(*laserCloudMsg, *laserCloudInRing);
-            if (laserCloudInRing->is_dense == false) {
-                ROS_ERROR("Point cloud is not in dense format, please remove NaN points first!");
-                ros::shutdown();
-            }  
+            pcl::PointCloud<PointXYZIR>::Ptr laserCloudInRingRaw;
+            laserCloudInRingRaw.reset(new pcl::PointCloud<PointXYZIR>());
+            pcl::fromROSMsg(*laserCloudMsg, *laserCloudInRingRaw);
+
+            // Remove Nan points
+            pcl::PointIndices::Ptr validIndices (new pcl::PointIndices);
+            validIndices->indices = indices;
+
+            pcl::ExtractIndices<PointXYZIR> extract;
+            extract.setInputCloud(laserCloudInRingRaw);
+            extract.setIndices(validIndices);
+            extract.setNegative(false);
+            extract.filter(*laserCloudInRing);
         }
     }
     

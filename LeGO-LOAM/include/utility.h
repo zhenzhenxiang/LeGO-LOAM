@@ -1,6 +1,7 @@
 #ifndef _UTILITY_LIDAR_ODOMETRY_H_
 #define _UTILITY_LIDAR_ODOMETRY_H_
 
+#define PCL_NO_PRECOMPILE
 
 #include <ros/ros.h>
 
@@ -22,6 +23,7 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/common/common.h>
 #include <pcl/registration/icp.h>
+#include <pcl/filters/extract_indices.h>
 
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
@@ -60,12 +62,12 @@ extern const string fileDirectory = "/tmp/";
 extern const bool useCloudRing = true; // if true, ang_res_y and ang_bottom are not used
 
 // VLP-16
-extern const int N_SCAN = 16;
-extern const int Horizon_SCAN = 1800;
-extern const float ang_res_x = 0.2;
-extern const float ang_res_y = 2.0;
-extern const float ang_bottom = 15.0+0.1;
-extern const int groundScanInd = 7;
+//extern const int N_SCAN = 16;
+//extern const int Horizon_SCAN = 1800;
+//extern const float ang_res_x = 0.2;
+//extern const float ang_res_y = 2.0;
+//extern const float ang_bottom = 15.0+0.1;
+//extern const int groundScanInd = 7;
 
 // HDL-32E
 // extern const int N_SCAN = 32;
@@ -100,6 +102,14 @@ extern const int groundScanInd = 7;
 // extern const float ang_res_y = 33.2/float(N_SCAN-1);
 // extern const float ang_bottom = 16.6+0.1;
 // extern const int groundScanInd = 15;
+
+// RS-Lidar-32
+extern const int N_SCAN = 32;
+extern const int Horizon_SCAN = 1800;
+extern const float ang_res_x = 360.0/float(Horizon_SCAN);
+extern const float ang_res_y = 40.0/float(N_SCAN-1); // not used in ring mode
+extern const float ang_bottom = 25.0; // not used in ring mode
+extern const int groundScanInd = 20;
 
 extern const bool loopClosureEnableFlag = false;
 extern const double mappingProcessInterval = 0.3;
