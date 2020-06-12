@@ -146,6 +146,7 @@ private:
     pcl::PointCloud<PointType>::Ptr globalMapKeyPosesDS;
     pcl::PointCloud<PointType>::Ptr globalMapKeyFrames;
     pcl::PointCloud<PointType>::Ptr globalMapKeyFramesDS;
+    pcl::PointCloud<PointType>::Ptr latestGlobalMapKeyFramesDS; // for saving the final map pointcloud
 
     std::vector<int> pointSearchInd;
     std::vector<float> pointSearchSqDis;
@@ -311,6 +312,7 @@ public:
         globalMapKeyPosesDS.reset(new pcl::PointCloud<PointType>());
         globalMapKeyFrames.reset(new pcl::PointCloud<PointType>());
         globalMapKeyFramesDS.reset(new pcl::PointCloud<PointType>());
+        latestGlobalMapKeyFramesDS.reset(new pcl::PointCloud<PointType>()); // final map ptr for saving pcd
 
         timeLaserCloudCornerLast = 0;
         timeLaserCloudSurfLast = 0;
@@ -728,11 +730,10 @@ public:
             publishGlobalMap();
         }
         // save final point cloud
-        pcl::io::savePCDFileASCII(fileDirectory+"finalCloud.pcd", *globalMapKeyFramesDS);
-
-        string cornerMapString = "/tmp/cornerMap.pcd";
-        string surfaceMapString = "/tmp/surfaceMap.pcd";
-        string trajectoryString = "/tmp/trajectory.pcd";
+        string fileName = fileDirectory;
+        fileName.append("finalCloud.pcd");
+        if (!latestGlobalMapKeyFramesDS->points.empty())
+            pcl::io::savePCDFileASCII(fileName, *latestGlobalMapKeyFramesDS);
 
         pcl::PointCloud<PointType>::Ptr cornerMapCloud(new pcl::PointCloud<PointType>());
         pcl::PointCloud<PointType>::Ptr cornerMapCloudDS(new pcl::PointCloud<PointType>());
@@ -757,7 +758,8 @@ public:
 
     void publishGlobalMap(){
 
-        if (pubLaserCloudSurround.getNumSubscribers() == 0)
+        if (pubLaserCloudSurround.getNumSubscribers() == 0
+            && pubRegisteredCloud.getNumSubscribers() == 0)
             return;
 
         if (cloudKeyPoses3D->points.empty() == true)
@@ -792,6 +794,9 @@ public:
         cloudMsgTemp.header.stamp = ros::Time().fromSec(timeLaserOdometry);
         cloudMsgTemp.header.frame_id = "/camera_init";
         pubLaserCloudSurround.publish(cloudMsgTemp);  
+
+        if (!globalMapKeyFrames->points.empty())
+           latestGlobalMapKeyFramesDS.swap(globalMapKeyFramesDS);
 
         globalMapKeyPoses->clear();
         globalMapKeyPosesDS->clear();
